@@ -3,6 +3,7 @@ import { Platform } from "react-native";
 import * as SecureStore from "expo-secure-store";
 import { login as apiLogin, logout as apiLogout, getMe, type User } from "@/services/auth";
 import { setStoredToken } from "@/services/api";
+import { registerForPushNotifications } from "@/services/notifications";
 
 const STORAGE_KEY = "auth_user";
 const TOKEN_KEY = "auth_token";
@@ -65,6 +66,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const parsed = JSON.parse(stored);
           if (parsed && parsed.nombre && parsed.rol) {
             setUser(parsed);
+            registerForPushNotifications().catch(() => {});
           } else {
             await storageDelete(STORAGE_KEY);
           }
@@ -82,6 +84,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(data.usuario);
     await storageSet(TOKEN_KEY, data.token);
     await storageSet(STORAGE_KEY, JSON.stringify(data.usuario));
+    registerForPushNotifications().catch(() => {});
   }
 
   async function logout() {

@@ -234,14 +234,21 @@ export default function EmployeesScreen() {
             <View className="bg-brand rounded-2xl p-5 mb-6">
               <Text className="text-white/80 text-sm font-medium mb-2">Únete a un equipo</Text>
               <Text className="text-white/60 text-xs mb-3">Ingresa el código que te compartió el dueño</Text>
-              <TextInput
-                className="bg-white rounded-xl px-4 py-3 text-base text-gray-900 mb-3"
-                placeholder="Código de unión"
-                placeholderTextColor="#9CA3AF"
-                autoCapitalize="none"
-                value={joinCode}
-                onChangeText={setJoinCode}
-              />
+              <View className="flex-row items-center bg-white rounded-xl px-4 py-3 mb-3">
+                <Text className="text-base font-bold text-brand mr-1">AP-</Text>
+                <TextInput
+                  className="flex-1 text-base text-gray-900"
+                  placeholder="1234"
+                  placeholderTextColor="#9CA3AF"
+                  keyboardType="number-pad"
+                  maxLength={6}
+                  value={joinCode.replace("AP-", "")}
+                  onChangeText={(text) => {
+                    const digits = text.replace(/\D/g, "");
+                    setJoinCode(digits ? `AP-${digits}` : "");
+                  }}
+                />
+              </View>
               {joinError && (
                 <Text className="text-white/80 text-xs mb-2">{joinError}</Text>
               )}
