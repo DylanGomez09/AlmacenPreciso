@@ -5,7 +5,6 @@
   "scripts": {
     "build:css": "tailwindcss -i ./tailwind-source.css -o ./global.css",
     "start": "pnpm build:css && expo start",
-    "reset-project": "node ./scripts/reset-project.js",
     "android": "pnpm build:css && expo start --android",
     "ios": "pnpm build:css && expo start --ios",
     "web": "pnpm build:css && expo start --web",
@@ -50,8 +49,12 @@
     "eslint": "^9.25.0",
     "eslint-config-expo": "~10.0.0",
     "postcss": "^8.5.15",
+    "sharp": "^0.34.5",
     "tailwindcss": "3",
     "typescript": "~5.9.2"
   },
-  "private": true
+  "private": true,
+  "pnpm": {
+    "onlyBuiltDependencies": ["sharp"]
+  }
 }

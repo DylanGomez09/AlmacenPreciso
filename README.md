@@ -1,50 +1,153 @@
-# Welcome to your Expo app 👋
+<p align="center">
+  <img src="assets/images/icon.png" alt="AlmacenPreciso" width="120" height="120" />
+</p>
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+<h1 align="center">AlmacenPreciso</h1>
 
-## Get started
+<p align="center">
+  <strong>Gestión de inventario y faltantes para almacenes</strong>
+</p>
 
-1. Install dependencies
+<p align="center">
+  <img src="https://img.shields.io/badge/Expo-54.0-000020?logo=expo&logoColor=white" alt="Expo SDK 54" />
+  <img src="https://img.shields.io/badge/React_Native-0.81-61DAFB?logo=react&logoColor=white" alt="React Native 0.81" />
+  <img src="https://img.shields.io/badge/TypeScript-5.9-3178C6?logo=typescript&logoColor=white" alt="TypeScript 5.9" />
+  <img src="https://img.shields.io/badge/NativeWind-4.4-38BDF8?logo=tailwindcss&logoColor=white" alt="NativeWind 4" />
+  <br/>
+  <img src="https://img.shields.io/badge/Android-3DDC84?logo=android&logoColor=white" alt="Android" />
+  <img src="https://img.shields.io/badge/iOS-000000?logo=apple&logoColor=white" alt="iOS" />
+  <img src="https://img.shields.io/badge/Web-4285F4?logo=googlechrome&logoColor=white" alt="Web" />
+</p>
 
-   ```bash
-   npm install
-   ```
+---
 
-2. Start the app
+## ✨ Features
 
-   ```bash
-   npx expo start
-   ```
+- **Reportar Faltantes** — Empleados reportan productos faltantes con nombre y categoría
+- **Aprobar / Rechazar** — Dueños revisan y gestionan los reportes
+- **Métricas en Tiempo Real** — Dashboard con conteo de faltantes y empleados activos
+- **Código de Unión** — Compartí el código del almacén para que empleados se unan
+- **Notificaciones Push** — Alertas cuando se reporta o aprueba un faltante
+- **Roles** — Interfaz adaptada para Dueño y Empleado
 
-In the output, you'll find options to open the app in a
+## 📱 Screenshots
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+| Home (Dueño) | Home (Empleado) | Inventario | Empleados |
+|---|---|---|---|
+| `(coming soon)` | `(coming soon)` | `(coming soon)` | `(coming soon)` |
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+## 🚀 Quick Start
 
 ```bash
-npm run reset-project
+# 1. Clone
+git clone https://github.com/tu-usuario/almacenpreciso.git
+cd almacenpreciso
+
+# 2. Install
+pnpm install
+
+# 3. Start
+pnpm start
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+> Requires Expo Go or a development build on your device.
 
-## Learn more
+## 🏗️ Project Architecture
 
-To learn more about developing your project with Expo, look at the following resources:
+```
+app/                    # Expo Router screens
+├── (auth)/             # Login & Register
+├── (tabs)/             # Main tabbed interface
+│   ├── index.tsx       # Home (dashboard)
+│   ├── inventory.tsx   # Faltantes CRUD
+│   ├── employees.tsx   # Team management
+│   └── profile.tsx     # User settings
+├── _layout.tsx         # Root layout
+└── index.tsx           # Entry redirect
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+components/             # Reusable UI
+├── faltante-card.tsx   # Faltante list card
+├── employee-list-item.tsx  # Employee card
+├── metric-card.tsx     # Stats card
+└── toast.tsx           # Animated notifications
 
-## Join the community
+services/               # API layer
+├── api.ts              # HTTP client
+├── auth.ts             # Authentication
+├── faltantes.ts        # Faltantes CRUD
+├── employees.ts        # Employee list
+├── comercios.ts        # Comercio API
+└── notifications.ts    # Push notifications
 
-Join our community of developers creating universal apps.
+context/                # State management
+└── auth-context.tsx    # Auth state + token persistence
+```
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+## 🔌 API Reference
+
+| Method | Endpoint | Description |
+|---|---|---|
+| POST | `/api/auth/login` | Login |
+| POST | `/api/auth/register` | Register |
+| POST | `/api/auth/join` | Join almacén |
+| GET | `/api/auth/me` | Current user |
+| GET | `/api/usuarios` | List employees |
+| POST | `/api/usuarios/push-token` | Register push token |
+| GET | `/api/faltantes` | List faltantes |
+| POST | `/api/faltantes` | Create faltante |
+| PATCH | `/api/faltantes/:id/estado` | Approve/reject |
+| DELETE | `/api/faltantes/:id` | Delete faltante |
+| GET | `/api/comercios/me` | Union code |
+| GET | `/api/faltantes/metricas` | Dashboard metrics |
+
+> Backend hosted on Railway. URL configured via `EXPO_PUBLIC_API_URL` env var.
+
+## 🛠️ Scripts
+
+```bash
+pnpm start         # Dev server (builds CSS first)
+pnpm android       # Start for Android
+pnpm ios           # Start for iOS
+pnpm web           # Start for web
+pnpm build:css     # Rebuild Tailwind CSS
+pnpm lint          # ESLint
+node scripts/generate-icons.js   # Regenerate app icons
+```
+
+## 📦 Building APK
+
+```bash
+pnpm build:css
+eas build -p android --profile preview
+```
+
+> Requires an Expo account and EAS CLI (`pnpm add -g eas-cli`).
+
+## 🤝 Roles
+
+### Dueño
+- Dashboard with metrics (faltantes hoy, empleados activos)
+- Approve/reject faltante reports
+- Manage employees (view list)
+- Share union code
+
+### Empleado
+- Report new faltantes
+- View pending reports
+- View team members
+- Join almacén via union code
+
+## 🧩 Tech Stack
+
+| Frontend | Backend (separate) |
+|---|---|
+| Expo SDK 54 | Railway |
+| React Native 0.81 | Node.js / Express |
+| NativeWind 4 (Tailwind) | Supabase (PostgreSQL) |
+| TypeScript 5.9 | JWT auth |
+| expo-router v6 | REST API |
+| expo-notifications | Push notifications |
+
+## 📄 License
+
+MIT
