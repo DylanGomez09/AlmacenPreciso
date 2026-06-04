@@ -109,7 +109,7 @@ export default function HomeScreen() {
           </View>
 
           <View className="px-5 mb-2">
-            <Text className="text-lg font-bold text-gray-900 mb-3">Acción Requerida: Faltantes</Text>
+            <Text className="text-xl font-bold text-gray-900 mb-3">Acción Requerida: Faltantes</Text>
             {faltantes.map((f) => (
               <FaltanteCard
                 key={f.id}
@@ -119,9 +119,11 @@ export default function HomeScreen() {
               />
             ))}
             {faltantes.length === 0 && (
-              <View className="items-center py-10">
-                <Feather name="check-circle" size={48} color="#10B981" />
-                <Text className="text-muted text-base mt-3">No hay faltantes pendientes</Text>
+              <View className="items-center py-4">
+                <View className="flex-row items-center bg-gray-100 rounded-full px-4 py-2">
+                  <Feather name="check-circle" size={16} color="#10B981" />
+                  <Text className="text-gray-500 text-sm ml-2">No hay faltantes pendientes</Text>
+                </View>
               </View>
             )}
           </View>
@@ -152,14 +154,7 @@ export default function HomeScreen() {
 
         <View className="px-5 mt-4 mb-6">
           <TouchableOpacity
-            onPress={() => router.navigate("/(tabs)/inventory")}
-            className="flex-row items-center bg-white rounded-2xl border border-gray-200 px-4 py-3.5 mb-3"
-          >
-            <Feather name="search" size={20} color="#9CA3AF" />
-            <Text className="flex-1 ml-3 text-base text-muted">¿Qué hace falta en góndola?</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() => router.navigate("/(tabs)/inventory")}
+            onPress={() => router.navigate("/(tabs)/inventory?reportar=true")}
             className="bg-brand rounded-2xl py-3.5 items-center flex-row justify-center gap-2"
           >
             <Feather name="plus" size={20} color="white" />
@@ -168,14 +163,16 @@ export default function HomeScreen() {
         </View>
 
         <View className="px-5">
-          <Text className="text-lg font-bold text-gray-900 mb-3">Inventario en Revisión</Text>
+          <Text className="text-xl font-bold text-gray-900 mb-3">Inventario en Revisión</Text>
           {faltantes.map((f) => (
             <FaltanteCard key={f.id} {...f} showActions={false} />
           ))}
           {faltantes.length === 0 && (
-            <View className="items-center py-10">
-              <Feather name="check-circle" size={48} color="#10B981" />
-              <Text className="text-muted text-base mt-3">No hay faltantes reportados</Text>
+            <View className="items-center py-4">
+              <View className="flex-row items-center bg-gray-100 rounded-full px-4 py-2">
+                <Feather name="check-circle" size={16} color="#10B981" />
+                <Text className="text-gray-500 text-sm ml-2">No hay faltantes reportados</Text>
+              </View>
             </View>
           )}
         </View>

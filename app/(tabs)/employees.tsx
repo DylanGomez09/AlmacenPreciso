@@ -152,7 +152,7 @@ export default function EmployeesScreen() {
     return (
       <View className="flex-1 bg-surface" style={{ paddingTop: insets.top + 8 }}>
         <View className="px-5 pt-4 pb-2">
-          <Text className="text-2xl font-bold text-gray-900">Empleados</Text>
+          <Text className="text-3xl font-bold text-gray-900">Empleados</Text>
         </View>
 
         <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
@@ -204,14 +204,16 @@ export default function EmployeesScreen() {
           )}
 
           <View className="px-5 mb-6">
-            <Text className="text-lg font-bold text-gray-900 mb-3">Empleados Activos</Text>
+            <Text className="text-xl font-bold text-gray-900 mb-3">Empleados Activos</Text>
             {employees.map((emp) => (
               <EmployeeListItem key={emp.id} {...emp} />
             ))}
             {employees.length === 0 && (
-              <View className="items-center py-10">
-                <Feather name="users" size={48} color="#D1D5DB" />
-                <Text className="text-muted text-base mt-3">No hay empleados registrados</Text>
+              <View className="items-center py-4">
+                <View className="flex-row items-center bg-gray-100 rounded-full px-4 py-2">
+                  <Feather name="users" size={16} color="#9CA3AF" />
+                  <Text className="text-gray-500 text-sm ml-2">No hay empleados registrados</Text>
+                </View>
               </View>
             )}
           </View>
@@ -225,7 +227,7 @@ export default function EmployeesScreen() {
   return (
     <View className="flex-1 bg-surface" style={{ paddingTop: insets.top + 8 }}>
       <View className="px-5 pt-4 pb-2">
-        <Text className="text-2xl font-bold text-gray-900">Mi Equipo</Text>
+        <Text className="text-3xl font-bold text-gray-900">Mi Equipo</Text>
       </View>
 
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
@@ -271,14 +273,16 @@ export default function EmployeesScreen() {
             </View>
           )}
 
-          <Text className="text-lg font-bold text-gray-900 mb-3">Compañeros</Text>
+          <Text className="text-xl font-bold text-gray-900 mb-3">Compañeros</Text>
           {employees.map((emp) => (
             <EmployeeListItem key={emp.id} {...emp} />
           ))}
           {employees.length === 0 && (
-            <View className="items-center py-10">
-              <Feather name="users" size={48} color="#D1D5DB" />
-              <Text className="text-muted text-base mt-3">No hay compañeros registrados</Text>
+            <View className="items-center py-4">
+              <View className="flex-row items-center bg-gray-100 rounded-full px-4 py-2">
+                <Feather name="users" size={16} color="#9CA3AF" />
+                <Text className="text-gray-500 text-sm ml-2">No hay compañeros registrados</Text>
+              </View>
             </View>
           )}
         </View>

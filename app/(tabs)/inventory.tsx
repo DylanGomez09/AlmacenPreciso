@@ -12,12 +12,14 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
+import { useLocalSearchParams } from "expo-router";
 import { useAuth } from "@/context/auth-context";
 import { FaltanteCard } from "@/components/faltante-card";
 import { getFaltantes, reportFaltante, approveFaltante, deleteFaltante, type Faltante } from "@/services/faltantes";
 
 export default function InventoryScreen() {
   const insets = useSafeAreaInsets();
+  const params = useLocalSearchParams<{ reportar?: string }>();
   const { user } = useAuth();
   const [items, setItems] = useState<Faltante[]>([]);
   const [loading, setLoading] = useState(true);
@@ -27,6 +29,14 @@ export default function InventoryScreen() {
   const [reportLoading, setReportLoading] = useState(false);
   const [newName, setNewName] = useState("");
   const [newCategory, setNewCategory] = useState("");
+  const isReported = useRef(false);
+
+  useEffect(() => {
+    if (params.reportar === "true" && !isReported.current) {
+      setShowModal(true);
+      isReported.current = true;
+    }
+  }, [params.reportar]);
 
   useEffect(() => {
     (async () => {
@@ -104,7 +114,7 @@ export default function InventoryScreen() {
   return (
     <View className="flex-1 bg-surface" style={{ paddingTop: insets.top + 8 }}>
       <View className="px-5 pt-4 pb-2">
-        <Text className="text-2xl font-bold text-gray-900">Inventario</Text>
+        <Text className="text-3xl font-bold text-gray-900">Inventario</Text>
         <Text className="text-muted text-sm mt-1">
           {user?.rol === "dueño" ? "Gestiona los productos del almacén" : "Productos reportados como faltantes"}
         </Text>
@@ -140,9 +150,11 @@ export default function InventoryScreen() {
           />
         ))}
         {filtered.length === 0 && (
-          <View className="items-center py-10">
-            <Feather name="package" size={48} color="#D1D5DB" />
-            <Text className="text-muted text-base mt-3">No se encontraron productos</Text>
+          <View className="items-center py-4">
+            <View className="flex-row items-center bg-gray-100 rounded-full px-4 py-2">
+              <Feather name="package" size={16} color="#9CA3AF" />
+              <Text className="text-gray-500 text-sm ml-2">No se encontraron productos</Text>
+            </View>
           </View>
         )}
       </ScrollView>

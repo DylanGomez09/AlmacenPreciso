@@ -1,4 +1,4 @@
-import { Text, TouchableOpacity, View } from "react-native";
+import { Alert, Text, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { useAuth } from "@/context/auth-context";
@@ -16,7 +16,7 @@ export default function ProfileScreen() {
   return (
     <View className="flex-1 bg-surface" style={{ paddingTop: insets.top + 8 }}>
       <View className="px-5 pt-4 pb-2">
-        <Text className="text-2xl font-bold text-gray-900">Perfil</Text>
+        <Text className="text-3xl font-bold text-gray-900">Perfil</Text>
       </View>
 
       <View className="mx-5 bg-white rounded-3xl p-6 items-center mb-6 shadow-sm border border-gray-100">
@@ -33,7 +33,10 @@ export default function ProfileScreen() {
       </View>
 
       <View className="mx-5 bg-white rounded-3xl p-2 shadow-sm border border-gray-100">
-        <TouchableOpacity className="flex-row items-center px-4 py-4">
+        <TouchableOpacity
+          className="flex-row items-center px-4 py-4"
+          onPress={() => Alert.alert("Notificaciones", "Próximamente podrás configurar tus alertas")}
+        >
           <View className="w-10 h-10 rounded-full bg-gray-100 items-center justify-center mr-3">
             <Feather name="bell" size={20} color="#6B7280" />
           </View>
@@ -44,7 +47,10 @@ export default function ProfileScreen() {
           <Feather name="chevron-right" size={20} color="#D1D5DB" />
         </TouchableOpacity>
         <View className="h-px bg-gray-100 mx-4" />
-        <TouchableOpacity className="flex-row items-center px-4 py-4">
+        <TouchableOpacity
+          className="flex-row items-center px-4 py-4"
+          onPress={() => Alert.alert("Cambiar contraseña", "Próximamente podrás actualizar tu contraseña")}
+        >
           <View className="w-10 h-10 rounded-full bg-gray-100 items-center justify-center mr-3">
             <Feather name="shield" size={20} color="#6B7280" />
           </View>
