@@ -1,44 +1,53 @@
 import { Platform } from "react-native";
-import * as Device from "expo-device";
-import * as Notifications from "expo-notifications";
+import Constants from "expo-constants";
 import { api } from "./api";
 
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldShowBanner: true,
-    shouldShowList: true,
-    shouldPlaySound: true,
-    shouldSetBadge: false,
-  }),
-});
+const isExpoGo = Constants.executionEnvironment === "storeClient";
 
 export async function registerForPushNotifications() {
-  if (!Device.isDevice) return;
+  if (isExpoGo) return;
+  try {
+    const Device = await import("expo-device");
+    const Notifications = await import("expo-notifications");
 
-  const { status: existing } = await Notifications.getPermissionsAsync();
-  let finalStatus = existing;
+    Notifications.setNotificationHandler({
+      handleNotification: async () => ({
+        shouldShowAlert: true,
+        shouldShowBanner: true,
+        shouldShowList: true,
+        shouldPlaySound: true,
+        shouldSetBadge: false,
+      }),
+    });
 
-  if (existing !== "granted") {
-    const { status } = await Notifications.requestPermissionsAsync();
-    finalStatus = status;
-  }
+    if (!Device.default.isDevice) return;
 
-  if (finalStatus !== "granted") return;
+    const { status: existing } = await Notifications.getPermissionsAsync();
+    let finalStatus = existing;
+    if (existing !== "granted") {
+      const { status } = await Notifications.requestPermissionsAsync();
+      finalStatus = status;
+    }
+    if (finalStatus !== "granted") return;
 
-  const tokenData = await Notifications.getExpoPushTokenAsync();
-  const token = tokenData.data;
-  const plataforma = Platform.OS;
-
-  await api.post("/usuarios/push-token", { token, plataforma });
+    const tokenData = await Notifications.getExpoPushTokenAsync();
+    await api.post("/usuarios/push-token", {
+      token: tokenData.data,
+      plataforma: Platform.OS,
+    });
+  } catch {}
 }
 
-export function setupNotificationListener(
+export async function setupNotificationListener(
   handleNotification: (data: Record<string, unknown>) => void
 ) {
-  const subscription =
-    Notifications.addNotificationResponseReceivedListener((response) => {
-      handleNotification(response.notification.request.content.data as Record<string, unknown>);
-    });
-  return subscription;
+  if (isExpoGo) return;
+  try {
+    const Notifications = await import("expo-notifications");
+    const subscription =
+      Notifications.addNotificationResponseReceivedListener((response) => {
+        handleNotification(response.notification.request.content.data as Record<string, unknown>);
+      });
+    return subscription;
+  } catch {}
 }
