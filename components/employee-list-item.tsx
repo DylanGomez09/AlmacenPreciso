@@ -17,7 +17,7 @@ function getInitials(name: string): string {
 
 export function EmployeeListItem({ name, email, role }: EmployeeListItemProps) {
   return (
-    <View className="flex-row items-center py-3 px-4 bg-white rounded-2xl mb-2 border border-gray-100 shadow-sm">
+    <View className="flex-row items-center py-3 px-4 bg-white rounded-2xl mb-2 shadow-sm">
       <View className="w-10 h-10 rounded-full bg-brand-light items-center justify-center mr-3">
         <Text className="text-brand font-bold text-sm">{getInitials(name)}</Text>
       </View>

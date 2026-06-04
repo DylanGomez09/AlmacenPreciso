@@ -17,7 +17,7 @@ export function MetricCard({ icon, label, value, color = "#00875A", bgColor = "#
   }>;
 
   return (
-    <View className="bg-white rounded-2xl p-4 flex-1 shadow-sm border border-gray-100">
+    <View className="bg-white rounded-2xl p-4 flex-1 shadow-sm">
       <View className="w-10 h-10 rounded-xl items-center justify-center mb-3" style={{ backgroundColor: bgColor }}>
         <FeatherIcon name={icon} size={20} color={color} />
       </View>

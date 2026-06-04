@@ -21,7 +21,7 @@ export function FaltanteCard({
   showActions = true,
 }: FaltanteCardProps) {
   return (
-    <View className="bg-white rounded-2xl p-4 mb-3 border border-gray-100 shadow-sm">
+    <View className="bg-white rounded-2xl p-4 mb-3 shadow-sm">
       <View className="flex-row items-start justify-between">
         <View className="flex-1 mr-3">
           <View className="flex-row items-center gap-2 mb-1">

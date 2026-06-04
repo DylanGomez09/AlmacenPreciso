@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   Modal,
   ScrollView,
   Text,
@@ -15,6 +14,7 @@ import { useFocusEffect } from "@react-navigation/native";
 import { useLocalSearchParams } from "expo-router";
 import { useAuth } from "@/context/auth-context";
 import { FaltanteCard } from "@/components/faltante-card";
+import { Toast } from "@/components/toast";
 import { getFaltantes, reportFaltante, approveFaltante, deleteFaltante, type Faltante } from "@/services/faltantes";
 
 export default function InventoryScreen() {
@@ -30,6 +30,8 @@ export default function InventoryScreen() {
   const [newName, setNewName] = useState("");
   const [newCategory, setNewCategory] = useState("");
   const isReported = useRef(false);
+  const [toast, setToast] = useState<{ visible: boolean; message: string; type: "success" | "error" }>({ visible: false, message: "", type: "success" });
+  function showToast(message: string, type: "success" | "error" = "success") { setToast({ visible: true, message, type }); }
 
   useEffect(() => {
     if (params.reportar === "true" && !isReported.current) {
@@ -69,7 +71,7 @@ export default function InventoryScreen() {
       await approveFaltante(id);
       setItems((prev) => prev.filter((f) => f.id !== id));
     } catch {
-      Alert.alert("Error", "No se pudo aprobar el faltante");
+      showToast("No se pudo aprobar el faltante", "error");
     }
   }
 
@@ -78,26 +80,26 @@ export default function InventoryScreen() {
       await deleteFaltante(id);
       setItems((prev) => prev.filter((f) => f.id !== id));
     } catch {
-      Alert.alert("Error", "No se pudo eliminar el faltante");
+      showToast("No se pudo eliminar el faltante", "error");
     }
   }
 
   async function handleReport() {
     if (!newName || !newCategory) {
-      Alert.alert("Error", "Completa todos los campos");
+      showToast("Completa todos los campos", "error");
       return;
     }
     setReportLoading(true);
     try {
       await reportFaltante({ nombre: newName, categoria: newCategory });
-      Alert.alert("Reportado", `${newName} ha sido enviado a revisión.`);
+      showToast(`${newName} ha sido enviado a revisión.`);
       setNewName("");
       setNewCategory("");
       setShowModal(false);
       const data = await getFaltantes();
       setItems(data);
     } catch {
-      Alert.alert("Error", "No se pudo reportar el faltante");
+      showToast("No se pudo reportar el faltante", "error");
     } finally {
       setReportLoading(false);
     }
@@ -200,6 +202,13 @@ export default function InventoryScreen() {
           </View>
         </View>
       </Modal>
+
+      <Toast
+        visible={toast.visible}
+        message={toast.message}
+        type={toast.type}
+        onDismiss={() => setToast((prev) => ({ ...prev, visible: false }))}
+      />
     </View>
   );
 }

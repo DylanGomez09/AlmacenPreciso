@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ActivityIndicator, Alert, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useFocusEffect } from "@react-navigation/native";
 import { Feather } from "@expo/vector-icons";
@@ -7,6 +7,7 @@ import { useAuth } from "@/context/auth-context";
 import { router } from "expo-router";
 import { MetricCard } from "@/components/metric-card";
 import { FaltanteCard } from "@/components/faltante-card";
+import { Toast } from "@/components/toast";
 import { getFaltantes, getMetrics, approveFaltante, deleteFaltante, type Faltante, type Metrics } from "@/services/faltantes";
 
 export default function HomeScreen() {
@@ -16,6 +17,8 @@ export default function HomeScreen() {
   const [metrics, setMetrics] = useState<Metrics | null>(null);
   const [loading, setLoading] = useState(true);
   const isFirstLoad = useRef(true);
+  const [toast, setToast] = useState<{ visible: boolean; message: string; type: "success" | "error" }>({ visible: false, message: "", type: "success" });
+  function showToast(message: string, type: "success" | "error" = "success") { setToast({ visible: true, message, type }); }
 
   const loadData = useCallback(async () => {
     try {
@@ -49,7 +52,7 @@ export default function HomeScreen() {
       await approveFaltante(id);
       setFaltantes((prev) => prev.filter((f) => f.id !== id));
     } catch {
-      Alert.alert("Error", "No se pudo aprobar el faltante");
+      showToast("No se pudo aprobar el faltante", "error");
     }
   }
 
@@ -58,7 +61,7 @@ export default function HomeScreen() {
       await deleteFaltante(id);
       setFaltantes((prev) => prev.filter((f) => f.id !== id));
     } catch {
-      Alert.alert("Error", "No se pudo eliminar el faltante");
+      showToast("No se pudo eliminar el faltante", "error");
     }
   }
 
@@ -128,6 +131,13 @@ export default function HomeScreen() {
             )}
           </View>
         </ScrollView>
+
+        <Toast
+          visible={toast.visible}
+          message={toast.message}
+          type={toast.type}
+          onDismiss={() => setToast((prev) => ({ ...prev, visible: false }))}
+        />
       </View>
     );
   }
@@ -177,6 +187,13 @@ export default function HomeScreen() {
           )}
         </View>
       </ScrollView>
+
+      <Toast
+        visible={toast.visible}
+        message={toast.message}
+        type={toast.type}
+        onDismiss={() => setToast((prev) => ({ ...prev, visible: false }))}
+      />
     </View>
   );
 }

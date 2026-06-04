@@ -1,12 +1,16 @@
-import { Alert, Text, TouchableOpacity, View } from "react-native";
+import { useState } from "react";
+import { Text, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { useAuth } from "@/context/auth-context";
+import { Toast } from "@/components/toast";
 import { router } from "expo-router";
 
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const { user, logout } = useAuth();
+  const [toast, setToast] = useState<{ visible: boolean; message: string; type: "success" | "error" }>({ visible: false, message: "", type: "success" });
+  function showToast(message: string, type: "success" | "error" = "success") { setToast({ visible: true, message, type }); }
 
   async function handleLogout() {
     await logout();
@@ -19,7 +23,7 @@ export default function ProfileScreen() {
         <Text className="text-3xl font-bold text-gray-900">Perfil</Text>
       </View>
 
-      <View className="mx-5 bg-white rounded-3xl p-6 items-center mb-6 shadow-sm border border-gray-100">
+      <View className="mx-5 bg-white rounded-3xl p-6 items-center mb-6 shadow-sm">
         <View className="w-20 h-20 rounded-full bg-brand items-center justify-center mb-4">
           <Feather name="user" size={36} color="white" />
         </View>
@@ -32,10 +36,10 @@ export default function ProfileScreen() {
         </View>
       </View>
 
-      <View className="mx-5 bg-white rounded-3xl p-2 shadow-sm border border-gray-100">
+      <View className="mx-5 bg-white rounded-3xl p-2 shadow-sm">
         <TouchableOpacity
           className="flex-row items-center px-4 py-4"
-          onPress={() => Alert.alert("Notificaciones", "Próximamente podrás configurar tus alertas")}
+          onPress={() => showToast("Próximamente podrás configurar tus notificaciones")}
         >
           <View className="w-10 h-10 rounded-full bg-gray-100 items-center justify-center mr-3">
             <Feather name="bell" size={20} color="#6B7280" />
@@ -49,7 +53,7 @@ export default function ProfileScreen() {
         <View className="h-px bg-gray-100 mx-4" />
         <TouchableOpacity
           className="flex-row items-center px-4 py-4"
-          onPress={() => Alert.alert("Cambiar contraseña", "Próximamente podrás actualizar tu contraseña")}
+          onPress={() => showToast("Próximamente podrás cambiar tu contraseña")}
         >
           <View className="w-10 h-10 rounded-full bg-gray-100 items-center justify-center mr-3">
             <Feather name="shield" size={20} color="#6B7280" />
@@ -71,6 +75,13 @@ export default function ProfileScreen() {
           <Text className="text-danger font-bold text-base">Cerrar Sesión</Text>
         </TouchableOpacity>
       </View>
+
+      <Toast
+        visible={toast.visible}
+        message={toast.message}
+        type={toast.type}
+        onDismiss={() => setToast((prev) => ({ ...prev, visible: false }))}
+      />
     </View>
   );
 }
