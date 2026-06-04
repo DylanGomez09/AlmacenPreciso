@@ -1,9 +1,11 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { Platform } from "react-native";
 import * as SecureStore from "expo-secure-store";
-import { login as apiLogin, logout as apiLogout, type User } from "@/services/auth";
+import { login as apiLogin, logout as apiLogout, getMe, type User } from "@/services/auth";
+import { setStoredToken } from "@/services/api";
 
 const STORAGE_KEY = "auth_user";
+const TOKEN_KEY = "auth_token";
 const isWeb = Platform.OS === "web";
 
 async function storageSet(key: string, value: string) {
@@ -42,6 +44,7 @@ interface AuthContextType {
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -53,6 +56,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     (async () => {
       try {
+        const token = await storageGet(TOKEN_KEY);
+        if (token) {
+          setStoredToken(token);
+        }
         const stored = await storageGet(STORAGE_KEY);
         if (stored) {
           const parsed = JSON.parse(stored);
@@ -71,18 +78,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   async function login(email: string, password: string) {
     const data = await apiLogin(email, password);
+    setStoredToken(data.token);
     setUser(data.usuario);
+    await storageSet(TOKEN_KEY, data.token);
     await storageSet(STORAGE_KEY, JSON.stringify(data.usuario));
   }
 
   async function logout() {
     apiLogout();
     setUser(null);
+    await storageDelete(TOKEN_KEY);
     await storageDelete(STORAGE_KEY);
   }
 
+  async function refreshUser() {
+    try {
+      const fresh = await getMe();
+      setUser(fresh);
+      await storageSet(STORAGE_KEY, JSON.stringify(fresh));
+    } catch {}
+  }
+
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, logout }}>
+    <AuthContext.Provider value={{ user, isLoading, login, logout, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );

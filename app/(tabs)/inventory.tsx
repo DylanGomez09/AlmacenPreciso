@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -11,17 +11,20 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
+import { useFocusEffect } from "@react-navigation/native";
 import { useAuth } from "@/context/auth-context";
 import { FaltanteCard } from "@/components/faltante-card";
-import { getFaltantes, reportFaltante, type Faltante } from "@/services/faltantes";
+import { getFaltantes, reportFaltante, approveFaltante, deleteFaltante, type Faltante } from "@/services/faltantes";
 
 export default function InventoryScreen() {
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const [items, setItems] = useState<Faltante[]>([]);
   const [loading, setLoading] = useState(true);
+  const isFirstLoad = useRef(true);
   const [search, setSearch] = useState("");
   const [showModal, setShowModal] = useState(false);
+  const [reportLoading, setReportLoading] = useState(false);
   const [newName, setNewName] = useState("");
   const [newCategory, setNewCategory] = useState("");
 
@@ -32,9 +35,18 @@ export default function InventoryScreen() {
         setItems(data);
       } catch {} finally {
         setLoading(false);
+        isFirstLoad.current = false;
       }
     })();
   }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (!isFirstLoad.current) {
+        getFaltantes().then(setItems).catch(() => {});
+      }
+    }, [])
+  );
 
   const filtered = items.filter(
     (item) =>
@@ -42,11 +54,30 @@ export default function InventoryScreen() {
       item.category.toLowerCase().includes(search.toLowerCase())
   );
 
+  async function handleApprove(id: number) {
+    try {
+      await approveFaltante(id);
+      setItems((prev) => prev.filter((f) => f.id !== id));
+    } catch {
+      Alert.alert("Error", "No se pudo aprobar el faltante");
+    }
+  }
+
+  async function handleDelete(id: number) {
+    try {
+      await deleteFaltante(id);
+      setItems((prev) => prev.filter((f) => f.id !== id));
+    } catch {
+      Alert.alert("Error", "No se pudo eliminar el faltante");
+    }
+  }
+
   async function handleReport() {
     if (!newName || !newCategory) {
       Alert.alert("Error", "Completa todos los campos");
       return;
     }
+    setReportLoading(true);
     try {
       await reportFaltante({ nombre: newName, categoria: newCategory });
       Alert.alert("Reportado", `${newName} ha sido enviado a revisión.`);
@@ -57,6 +88,8 @@ export default function InventoryScreen() {
       setItems(data);
     } catch {
       Alert.alert("Error", "No se pudo reportar el faltante");
+    } finally {
+      setReportLoading(false);
     }
   }
 
@@ -102,6 +135,8 @@ export default function InventoryScreen() {
             key={item.id}
             {...item}
             showActions={user?.rol === "dueño"}
+            onApprove={user?.rol === "dueño" ? () => handleApprove(item.id) : undefined}
+            onDelete={user?.rol === "dueño" ? () => handleDelete(item.id) : undefined}
           />
         ))}
         {filtered.length === 0 && (
@@ -142,9 +177,13 @@ export default function InventoryScreen() {
 
             <TouchableOpacity
               onPress={handleReport}
-              className="bg-brand rounded-xl py-4 items-center"
+              disabled={reportLoading}
+              className="bg-brand rounded-xl py-4 items-center flex-row justify-center gap-2"
             >
-              <Text className="text-white font-bold text-base">Enviar Reporte</Text>
+              {reportLoading && <ActivityIndicator size="small" color="white" />}
+              <Text className="text-white font-bold text-base">
+                {reportLoading ? "Enviando..." : "Enviar Reporte"}
+              </Text>
             </TouchableOpacity>
           </View>
         </View>

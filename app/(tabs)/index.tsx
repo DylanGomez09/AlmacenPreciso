@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
-import { ActivityIndicator, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { ActivityIndicator, Alert, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useFocusEffect } from "@react-navigation/native";
 import { Feather } from "@expo/vector-icons";
 import { useAuth } from "@/context/auth-context";
 import { router } from "expo-router";
@@ -14,34 +15,51 @@ export default function HomeScreen() {
   const [faltantes, setFaltantes] = useState<Faltante[]>([]);
   const [metrics, setMetrics] = useState<Metrics | null>(null);
   const [loading, setLoading] = useState(true);
+  const isFirstLoad = useRef(true);
+
+  const loadData = useCallback(async () => {
+    try {
+      const [faltantesData, metricsData] = await Promise.all([
+        getFaltantes(),
+        getMetrics(),
+      ]);
+      setFaltantes(faltantesData);
+      setMetrics(metricsData);
+    } catch {}
+  }, []);
 
   useEffect(() => {
     (async () => {
-      try {
-        const [faltantesData, metricsData] = await Promise.all([
-          getFaltantes(),
-          getMetrics(),
-        ]);
-        setFaltantes(faltantesData);
-        setMetrics(metricsData);
-      } catch {} finally {
-        setLoading(false);
-      }
+      await loadData();
+      setLoading(false);
+      isFirstLoad.current = false;
     })();
-  }, []);
+  }, [loadData]);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (!isFirstLoad.current) {
+        loadData();
+      }
+    }, [loadData])
+  );
 
   async function handleApprove(id: number) {
     try {
       await approveFaltante(id);
       setFaltantes((prev) => prev.filter((f) => f.id !== id));
-    } catch {}
+    } catch {
+      Alert.alert("Error", "No se pudo aprobar el faltante");
+    }
   }
 
   async function handleDelete(id: number) {
     try {
       await deleteFaltante(id);
       setFaltantes((prev) => prev.filter((f) => f.id !== id));
-    } catch {}
+    } catch {
+      Alert.alert("Error", "No se pudo eliminar el faltante");
+    }
   }
 
   if (loading) {
@@ -58,7 +76,7 @@ export default function HomeScreen() {
         <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
           <View className="px-5 pt-4 pb-2">
             <View className="flex-row items-center justify-between mb-1">
-              <Text className="text-2xl font-bold text-gray-900">
+              <Text className="text-3xl font-bold text-gray-900">
                 Hola, {user.nombre.split(" ")[0]} 👋
               </Text>
               <TouchableOpacity
@@ -117,7 +135,7 @@ export default function HomeScreen() {
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
         <View className="px-5 pt-4 pb-2">
           <View className="flex-row items-center justify-between mb-1">
-            <Text className="text-2xl font-bold text-gray-900">
+            <Text className="text-3xl font-bold text-gray-900">
               Hola, {user?.nombre?.split(" ")[0] ?? "Usuario"} 👋
             </Text>
             <TouchableOpacity
@@ -133,11 +151,17 @@ export default function HomeScreen() {
         </View>
 
         <View className="px-5 mt-4 mb-6">
-          <View className="flex-row items-center bg-white rounded-2xl border border-gray-200 px-4 py-3.5 mb-3">
+          <TouchableOpacity
+            onPress={() => router.navigate("/(tabs)/inventory")}
+            className="flex-row items-center bg-white rounded-2xl border border-gray-200 px-4 py-3.5 mb-3"
+          >
             <Feather name="search" size={20} color="#9CA3AF" />
             <Text className="flex-1 ml-3 text-base text-muted">¿Qué hace falta en góndola?</Text>
-          </View>
-          <TouchableOpacity className="bg-brand rounded-2xl py-3.5 items-center flex-row justify-center gap-2">
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => router.navigate("/(tabs)/inventory")}
+            className="bg-brand rounded-2xl py-3.5 items-center flex-row justify-center gap-2"
+          >
             <Feather name="plus" size={20} color="white" />
             <Text className="text-white font-bold text-base">Reportar Faltante</Text>
           </TouchableOpacity>

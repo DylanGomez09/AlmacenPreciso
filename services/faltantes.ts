@@ -19,15 +19,24 @@ export async function getMetrics(): Promise<Metrics> {
 }
 
 export async function getFaltantes(): Promise<Faltante[]> {
-  return api.get<Faltante[]>("/faltantes");
+  const data = await api.get<unknown>("/faltantes");
+  const list = Array.isArray(data) ? data : (data as any)?.data ?? [];
+  return (list as any[]).map((item) => ({
+    id: item.id as number,
+    name: item.nombre as string,
+    category: (item.categoria as string) || "General",
+    reporter: (item.actualizado_por as string) || "",
+    urgent: item.estado === "urgente",
+    created_at: item.created_at as string,
+  }));
 }
 
 export async function approveFaltante(id: number): Promise<void> {
-  return api.post("/faltantes/action", { id, action: "approve" });
+  return api.patch(`/faltantes/${id}/estado`, { estado: "aprobado" });
 }
 
 export async function deleteFaltante(id: number): Promise<void> {
-  return api.post("/faltantes/action", { id, action: "delete" });
+  return api.delete(`/faltantes/${id}`);
 }
 
 export interface ReportFaltanteData {
@@ -36,5 +45,5 @@ export interface ReportFaltanteData {
 }
 
 export async function reportFaltante(data: ReportFaltanteData): Promise<void> {
-  return api.post("/inventory/report", data);
+  return api.post("/faltantes", data);
 }

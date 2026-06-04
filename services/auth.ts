@@ -23,6 +23,11 @@ export function logout() {
   setStoredToken(null);
 }
 
+export async function getMe(): Promise<User> {
+  const data = await api.get<{ usuario: User }>("/auth/me");
+  return data.usuario;
+}
+
 export interface RegisterData {
   nombre: string;
   email: string;

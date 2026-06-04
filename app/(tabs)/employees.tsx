@@ -1,58 +1,124 @@
-import { useEffect, useState } from "react";
-import { ActivityIndicator, ScrollView, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { ActivityIndicator, Platform, ScrollView, Share, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
+import { useFocusEffect } from "@react-navigation/native";
 import { useAuth } from "@/context/auth-context";
 import { EmployeeListItem } from "@/components/employee-list-item";
-import { getActiveEmployees, getJoinRequests, getUnionCode, approveRequest, rejectRequest, type Employee, type JoinRequest } from "@/services/employees";
+import { getActiveEmployees, getUnionCode, type Employee } from "@/services/employees";
+import { createComercio } from "@/services/comercios";
+import * as SecureStore from "expo-secure-store";
 import { api } from "@/services/api";
+
+const isWeb = Platform.OS === "web";
 
 export default function EmployeesScreen() {
   const insets = useSafeAreaInsets();
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
   const [employees, setEmployees] = useState<Employee[]>([]);
-  const [requests, setRequests] = useState<JoinRequest[]>([]);
   const [unionCode, setUnionCode] = useState("");
   const [codeError, setCodeError] = useState(false);
+  const [sinComercio, setSinComercio] = useState(false);
   const [loading, setLoading] = useState(true);
+  const isFirstLoad = useRef(true);
   const [joinCode, setJoinCode] = useState("");
   const [joinLoading, setJoinLoading] = useState(false);
   const [joinError, setJoinError] = useState("");
   const [joinSuccess, setJoinSuccess] = useState(false);
+  const [storeName, setStoreName] = useState("");
+  const [creando, setCreando] = useState(false);
+  const [crearError, setCrearError] = useState("");
 
   useEffect(() => {
     (async () => {
       try {
-        const [empData, reqData] = await Promise.all([
-          getActiveEmployees(),
-          getJoinRequests(),
-        ]);
+        const empData = await getActiveEmployees().catch(() => [] as Employee[]);
         setEmployees(empData);
-        setRequests(reqData.filter((r) => r.status === "pending"));
-        if (user?.rol === "dueño") {
-          const codeData = await getUnionCode();
-          setUnionCode(codeData.codigo_unico);
+      } catch {}
+      try {
+        if (user?.rol === "dueño" && user?.comercio_id) {
+          setSinComercio(false);
+          setCodeError(false);
+          const key = `union_code_${user.id}`;
+          const cached = isWeb ? localStorage.getItem(key) : await SecureStore.getItemAsync(key);
+          if (cached) {
+            setUnionCode(cached);
+          } else {
+            const code = await getUnionCode();
+            if (code) {
+              if (isWeb) {
+                localStorage.setItem(key, code);
+              } else {
+                await SecureStore.setItemAsync(key, code);
+              }
+              setUnionCode(code);
+            } else {
+              setCodeError(true);
+            }
+          }
+        } else if (user?.rol === "dueño") {
+          setSinComercio(true);
         }
       } catch {
-        setCodeError(true);
+        if (user?.rol === "dueño" && user?.comercio_id) {
+          setCodeError(true);
+        } else if (user?.rol === "dueño") {
+          setSinComercio(true);
+        }
       } finally {
         setLoading(false);
       }
     })();
-  }, [user?.rol]);
+  }, [user?.rol, user?.comercio_id]);
 
-  async function handleReject(id: number) {
-    try {
-      await rejectRequest(id);
-      setRequests((prev) => prev.filter((r) => r.id !== id));
-    } catch {}
+  useFocusEffect(
+    useCallback(() => {
+      if (!isFirstLoad.current) {
+        getActiveEmployees()
+          .then(setEmployees)
+          .catch(() => {});
+        if (user?.rol === "dueño" && user?.comercio_id) {
+          getUnionCode()
+            .then((code) => { if (code) setUnionCode(code); })
+            .catch(() => {});
+        }
+      }
+      isFirstLoad.current = false;
+    }, [user?.rol, user?.comercio_id])
+  );
+
+  function extractCodigoUnico(data: any): string {
+    if (typeof data === "string") return data;
+    if (data?.codigo_unico) return data.codigo_unico;
+    if (data?.data?.codigo_unico) return data.data.codigo_unico;
+    if (data?.comercio?.codigo_unico) return data.comercio.codigo_unico;
+    return "";
   }
 
-  async function handleApprove(id: number) {
+  async function handleCreateComercio() {
+    if (!storeName) return;
+    setCreando(true);
+    setCrearError("");
     try {
-      await approveRequest(id);
-      setRequests((prev) => prev.filter((r) => r.id !== id));
-    } catch {}
+      const comercio = await createComercio(storeName);
+      const codigo = extractCodigoUnico(comercio);
+      if (codigo) {
+        const key = `union_code_${user?.id}`;
+        if (isWeb) {
+          localStorage.setItem(key, codigo);
+        } else {
+          await SecureStore.setItemAsync(key, codigo);
+        }
+        setUnionCode(codigo);
+        setSinComercio(false);
+      }
+      await refreshUser();
+      setStoreName("");
+    } catch (e: any) {
+      setCrearError(e.message || "Error al crear el almacén");
+    } finally {
+      setCreando(false);
+    }
   }
 
   async function handleJoin() {
@@ -64,6 +130,7 @@ export default function EmployeesScreen() {
       await api.post("/auth/join", { codigo_unico: joinCode });
       setJoinSuccess(true);
       setJoinCode("");
+      await refreshUser();
       const [empData] = await Promise.all([getActiveEmployees()]);
       setEmployees(empData);
     } catch (e: any) {
@@ -89,20 +156,52 @@ export default function EmployeesScreen() {
         </View>
 
         <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
-          <View className="mx-5 bg-brand rounded-2xl p-5 mb-6">
-            <Text className="text-white/80 text-sm font-medium mb-1">Código de Unión</Text>
-            <View className="flex-row items-center justify-between">
-              {codeError ? (
-                <Text className="text-white/80 text-base">Error al cargar el código</Text>
-              ) : (
-                <Text className="text-3xl font-bold text-white tracking-widest">{unionCode}</Text>
+          {sinComercio ? (
+            <View className="mx-5 bg-brand rounded-2xl p-5 mb-6">
+              <Text className="text-white/80 text-sm font-medium mb-2">Crea tu Almacén</Text>
+              <Text className="text-white/60 text-xs mb-3">Registra tu almacén para generar el código de unión</Text>
+              <TextInput
+                className="bg-white rounded-xl px-4 py-3 text-base text-gray-900 mb-3"
+                placeholder="Nombre del almacén"
+                placeholderTextColor="#9CA3AF"
+                autoCapitalize="words"
+                value={storeName}
+                onChangeText={setStoreName}
+              />
+              {crearError && (
+                <Text className="text-white/80 text-xs mb-2">{crearError}</Text>
               )}
-              <TouchableOpacity className="bg-white/20 rounded-xl px-4 py-2">
-                <Feather name="copy" size={18} color="white" />
+              <TouchableOpacity
+                onPress={handleCreateComercio}
+                disabled={creando || !storeName}
+                className="bg-white/20 rounded-xl py-3 items-center"
+              >
+                <Text className="text-white font-bold text-base">
+                  {creando ? "Creando..." : "Crear Almacén"}
+                </Text>
               </TouchableOpacity>
             </View>
-            <Text className="text-white/60 text-xs mt-2">Comparte este código con nuevos empleados</Text>
-          </View>
+          ) : (
+            <View className="mx-5 bg-brand rounded-2xl p-5 mb-6">
+              <Text className="text-white/80 text-sm font-medium mb-1">Código de Unión</Text>
+              <View className="flex-row items-center justify-between">
+                {codeError ? (
+                  <Text className="text-white/80 text-base">Error al cargar el código</Text>
+                ) : unionCode ? (
+                  <Text className="text-3xl font-bold text-white tracking-widest">{unionCode}</Text>
+                ) : (
+                  <Text className="text-white/80 text-base">Generando código...</Text>
+                )}
+                <TouchableOpacity
+                  className="bg-white/20 rounded-xl px-4 py-2"
+                  onPress={() => Share.share({ message: `Código de unión: ${unionCode}` })}
+                >
+                  <Feather name="share-2" size={18} color="white" />
+                </TouchableOpacity>
+              </View>
+              <Text className="text-white/60 text-xs mt-2">Comparte este código con nuevos empleados</Text>
+            </View>
+          )}
 
           <View className="px-5 mb-6">
             <Text className="text-lg font-bold text-gray-900 mb-3">Empleados Activos</Text>
@@ -117,50 +216,7 @@ export default function EmployeesScreen() {
             )}
           </View>
 
-          {requests.length > 0 && (
-            <View className="px-5 pb-6">
-              <View className="flex-row items-center gap-2 mb-3">
-                <Text className="text-lg font-bold text-gray-900">Solicitudes Pendientes</Text>
-                <View className="bg-coral-bg rounded-full px-2 py-0.5">
-                  <Text className="text-xs font-bold text-coral">{requests.length}</Text>
-                </View>
-              </View>
-              {requests.map((req) => (
-                <View
-                  key={req.id}
-                  className="bg-white rounded-2xl p-4 mb-2 border border-gray-100 shadow-sm"
-                >
-                  <View className="flex-row items-center justify-between">
-                    <View className="flex-row items-center">
-                      <View className="w-10 h-10 rounded-full bg-brand-light items-center justify-center mr-3">
-                        <Text className="text-brand font-bold text-sm">
-                          {req.employee_name.split(" ").map((s) => s[0]).join("")}
-                        </Text>
-                      </View>
-                      <View>
-                        <Text className="text-base font-semibold text-gray-900">{req.employee_name}</Text>
-                        <Text className="text-sm text-muted">Solicita unirse al equipo</Text>
-                      </View>
-                    </View>
-                  </View>
-                  <View className="flex-row gap-2 mt-3">
-                    <TouchableOpacity
-                      onPress={() => handleReject(req.id)}
-                      className="flex-1 py-2.5 rounded-xl border border-danger items-center"
-                    >
-                      <Text className="text-danger font-semibold text-sm">Rechazar</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      onPress={() => handleApprove(req.id)}
-                      className="flex-1 py-2.5 rounded-xl bg-brand items-center"
-                    >
-                      <Text className="text-white font-semibold text-sm">Aprobar</Text>
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              ))}
-            </View>
-          )}
+
         </ScrollView>
       </View>
     );
