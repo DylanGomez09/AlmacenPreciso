@@ -1,4 +1,4 @@
-import { api, setStoredToken } from "./api";
+import { api } from "./api";
 
 export interface User {
   id: string;
@@ -8,19 +8,27 @@ export interface User {
   comercio_id?: string | null;
 }
 
-interface LoginResponse {
-  token: string;
+export interface LoginResponse {
+  access_token: string;
+  refresh_token: string;
   usuario: User;
 }
 
-export async function login(email: string, password: string): Promise<LoginResponse> {
-  const data = await api.post<LoginResponse>("/auth/login", { email, password });
-  setStoredToken(data.token);
-  return data;
+export interface RefreshResponse {
+  access_token: string;
+  refresh_token: string;
 }
 
-export function logout() {
-  setStoredToken(null);
+export async function login(email: string, password: string): Promise<LoginResponse> {
+  return api.post<LoginResponse>("/auth/login", { email, password });
+}
+
+export async function logout() {
+  await api.post("/auth/logout", {}).catch(() => {});
+}
+
+export async function refreshAccessToken(refreshToken: string): Promise<RefreshResponse> {
+  return api.post<RefreshResponse>("/auth/refresh", { refresh_token: refreshToken }, { skipAuth: true });
 }
 
 export async function getMe(): Promise<User> {
@@ -37,7 +45,5 @@ export interface RegisterData {
 }
 
 export async function register(data: RegisterData): Promise<LoginResponse> {
-  const result = await api.post<LoginResponse>("/auth/register", data);
-  setStoredToken(result.token);
-  return result;
+  return api.post<LoginResponse>("/auth/register", data);
 }
