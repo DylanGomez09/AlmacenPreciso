@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Modal,
+  RefreshControl,
   ScrollView,
   Text,
   TextInput,
@@ -15,7 +16,7 @@ import { useLocalSearchParams } from "expo-router";
 import { useAuth } from "@/context/auth-context";
 import { FaltanteCard } from "@/components/faltante-card";
 import { Toast } from "@/components/toast";
-import { getFaltantes, reportFaltante, approveFaltante, deleteFaltante, type Faltante } from "@/services/faltantes";
+import { getFaltantes, getCachedFaltantes, reportFaltante, approveFaltante, deleteFaltante, type Faltante } from "@/services/faltantes";
 
 export default function InventoryScreen() {
   const insets = useSafeAreaInsets();
@@ -23,6 +24,7 @@ export default function InventoryScreen() {
   const { user } = useAuth();
   const [items, setItems] = useState<Faltante[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const isFirstLoad = useRef(true);
   const [search, setSearch] = useState("");
   const [showModal, setShowModal] = useState(false);
@@ -40,24 +42,39 @@ export default function InventoryScreen() {
     }
   }, [params.reportar]);
 
+  const loadItems = useCallback(async () => {
+    try {
+      const data = await getFaltantes();
+      setItems(data);
+    } catch {
+      showToast("No se pudieron cargar los productos", "error");
+    }
+  }, []);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await loadItems();
+    setRefreshing(false);
+  }, [loadItems]);
+
   useEffect(() => {
     (async () => {
-      try {
-        const data = await getFaltantes();
-        setItems(data);
-      } catch {} finally {
-        setLoading(false);
-        isFirstLoad.current = false;
+      const cached = await getCachedFaltantes();
+      if (cached) {
+        setItems(cached);
       }
+      await loadItems();
+      setLoading(false);
+      isFirstLoad.current = false;
     })();
-  }, []);
+  }, [loadItems]);
 
   useFocusEffect(
     useCallback(() => {
       if (!isFirstLoad.current) {
-        getFaltantes().then(setItems).catch(() => {});
+        loadItems();
       }
-    }, [])
+    }, [loadItems])
   );
 
   const filtered = items.filter(
@@ -116,10 +133,20 @@ export default function InventoryScreen() {
   return (
     <View className="flex-1 bg-surface" style={{ paddingTop: insets.top + 8 }}>
       <View className="px-5 pt-4 pb-2">
-        <Text className="text-3xl font-bold text-gray-900">Inventario</Text>
-        <Text className="text-muted text-sm mt-1">
-          {user?.rol === "dueño" ? "Gestiona los productos del almacén" : "Productos reportados como faltantes"}
-        </Text>
+        <View className="flex-row items-center justify-between">
+          <View>
+            <Text className="text-3xl font-bold text-gray-900">Inventario</Text>
+            <Text className="text-muted text-sm mt-1">
+              {user?.rol === "dueño" ? "Gestiona los productos del almacén" : "Productos reportados como faltantes"}
+            </Text>
+          </View>
+          <TouchableOpacity
+            onPress={onRefresh}
+            className="w-10 h-10 rounded-full bg-gray-100 items-center justify-center"
+          >
+            <Feather name="refresh-cw" size={18} color="#00875A" />
+          </TouchableOpacity>
+        </View>
       </View>
 
         <View className="flex-row items-center px-5 mb-4">
@@ -141,7 +168,11 @@ export default function InventoryScreen() {
           </TouchableOpacity>
         </View>
 
-      <ScrollView className="flex-1 px-5" showsVerticalScrollIndicator={false}>
+      <ScrollView
+        className="flex-1 px-5"
+        showsVerticalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#00875A" colors={["#00875A"]} />}
+      >
         {filtered.map((item) => (
           <FaltanteCard
             key={item.id}

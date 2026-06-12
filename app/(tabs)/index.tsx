@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ActivityIndicator, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, RefreshControl, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useFocusEffect } from "@react-navigation/native";
 import { Feather } from "@expo/vector-icons";
@@ -8,7 +8,7 @@ import { router } from "expo-router";
 import { MetricCard } from "@/components/metric-card";
 import { FaltanteCard } from "@/components/faltante-card";
 import { Toast } from "@/components/toast";
-import { getFaltantes, getMetrics, approveFaltante, deleteFaltante, type Faltante, type Metrics } from "@/services/faltantes";
+import { getFaltantes, getMetrics, getCachedFaltantes, approveFaltante, deleteFaltante, type Faltante, type Metrics } from "@/services/faltantes";
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
@@ -16,6 +16,7 @@ export default function HomeScreen() {
   const [faltantes, setFaltantes] = useState<Faltante[]>([]);
   const [metrics, setMetrics] = useState<Metrics | null>(null);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const isFirstLoad = useRef(true);
   const [toast, setToast] = useState<{ visible: boolean; message: string; type: "success" | "error" }>({ visible: false, message: "", type: "success" });
   function showToast(message: string, type: "success" | "error" = "success") { setToast({ visible: true, message, type }); }
@@ -28,11 +29,23 @@ export default function HomeScreen() {
       ]);
       setFaltantes(faltantesData);
       setMetrics(metricsData);
-    } catch {}
+    } catch {
+      showToast("No se pudieron cargar los datos", "error");
+    }
   }, []);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await loadData();
+    setRefreshing(false);
+  }, [loadData]);
 
   useEffect(() => {
     (async () => {
+      const cached = await getCachedFaltantes();
+      if (cached) {
+        setFaltantes(cached);
+      }
       await loadData();
       setLoading(false);
       isFirstLoad.current = false;
@@ -76,18 +89,30 @@ export default function HomeScreen() {
   if (user?.rol === "dueño") {
     return (
       <View className="flex-1 bg-surface" style={{ paddingTop: insets.top + 8 }}>
-        <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+        <ScrollView
+          className="flex-1"
+          showsVerticalScrollIndicator={false}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#00875A" colors={["#00875A"]} />}
+        >
           <View className="px-5 pt-4 pb-2">
             <View className="flex-row items-center justify-between mb-1">
               <Text className="text-3xl font-bold text-gray-900">
                 Hola, {user.nombre.split(" ")[0]} 👋
               </Text>
-              <TouchableOpacity
-                onPress={() => router.navigate("/(tabs)/profile")}
-                className="w-10 h-10 rounded-full bg-brand items-center justify-center"
-              >
-                <Feather name="user" size={18} color="white" />
-              </TouchableOpacity>
+              <View className="flex-row gap-2">
+                <TouchableOpacity
+                  onPress={onRefresh}
+                  className="w-10 h-10 rounded-full bg-gray-100 items-center justify-center"
+                >
+                  <Feather name="refresh-cw" size={18} color="#00875A" />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => router.navigate("/(tabs)/profile")}
+                  className="w-10 h-10 rounded-full bg-brand items-center justify-center"
+                >
+                  <Feather name="user" size={18} color="white" />
+                </TouchableOpacity>
+              </View>
             </View>
             <View className="bg-brand-light self-start rounded-full px-3 py-1">
               <Text className="text-brand font-semibold text-xs">Rol: Dueño</Text>
@@ -144,21 +169,33 @@ export default function HomeScreen() {
 
   return (
     <View className="flex-1 bg-surface" style={{ paddingTop: insets.top + 8 }}>
-      <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+      <ScrollView
+        className="flex-1"
+        showsVerticalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#00875A" colors={["#00875A"]} />}
+      >
         <View className="px-5 pt-4 pb-2">
           <View className="flex-row items-center justify-between mb-1">
             <Text className="text-3xl font-bold text-gray-900">
               Hola, {user?.nombre?.split(" ")[0] ?? "Usuario"} 👋
             </Text>
-            <TouchableOpacity
+            <View className="flex-row gap-2">
+              <TouchableOpacity
+                onPress={onRefresh}
+                className="w-10 h-10 rounded-full bg-gray-100 items-center justify-center"
+              >
+                <Feather name="refresh-cw" size={18} color="#00875A" />
+              </TouchableOpacity>
+              <TouchableOpacity
                 onPress={() => router.navigate("/(tabs)/profile")}
                 className="w-10 h-10 rounded-full bg-brand items-center justify-center"
               >
                 <Feather name="user" size={18} color="white" />
               </TouchableOpacity>
             </View>
-            <View className="bg-brand-light self-start rounded-full px-3 py-1">
-              <Text className="text-brand font-semibold text-xs">Rol: Empleado</Text>
+          </View>
+          <View className="bg-brand-light self-start rounded-full px-3 py-1">
+            <Text className="text-brand font-semibold text-xs">Rol: Empleado</Text>
           </View>
         </View>
 
