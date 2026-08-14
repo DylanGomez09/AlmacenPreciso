@@ -5,7 +5,7 @@
 <h1 align="center">AlmacenPreciso</h1>
 
 <p align="center">
-  <strong>Gestión de inventario y faltantes para almacenes</strong>
+  <strong>Gestión inteligente de inventario y faltantes en tiempo real para almacenes y comercios.</strong>
 </p>
 
 <p align="center">
@@ -21,14 +21,32 @@
 
 ---
 
+## 📝 Descripción
+
+**AlmacenPreciso** es una solución móvil diseñada para optimizar y agilizar la comunicación operativa entre los dueños de comercios y su personal. Resuelve el problema cotidiano de quiebres de stock y falta de productos en góndola permitiendo que los empleados reporten faltantes de manera instantánea desde sus dispositivos.
+
+A través de un flujo de trabajo simplificado basado en roles, los administradores reciben métricas en tiempo real, alertas mediante notificaciones push y la facultad de aprobar o rechazar reposiciones con un solo toque, centralizando la gestión de inventario y evitando pérdidas de ventas por falta de stock.
+
+---
+
+## 🔗 Repositorios del Proyecto
+
+Esta aplicación corresponde al cliente móvil de la plataforma. Para consultar el código fuente de la API REST, migraciones de base de datos y la configuración del servidor, visita:
+
+👉 **[AlmacenPreciso - Backend Repository](https://github.com/DylanGomez09/AlmacenPreciso---Backend)**
+
+---
+
 ## ✨ Features
 
-- **Reportar Faltantes** — Empleados reportan productos faltantes con nombre y categoría
-- **Aprobar / Rechazar** — Dueños revisan y gestionan los reportes
-- **Métricas en Tiempo Real** — Dashboard con conteo de faltantes y empleados activos
-- **Código de Unión** — Compartí el código del almacén para que empleados se unan
-- **Notificaciones Push** — Alertas cuando se reporta o aprueba un faltante
-- **Roles** — Interfaz adaptada para Dueño y Empleado
+- **Reportar Faltantes** — Empleados reportan productos faltantes especificando nombre, categoría y detalles
+- **Aprobar / Rechazar** — Los dueños o administradores revisan y gestionan las solicitudes en tiempo real
+- **Métricas e Indicadores** — Dashboard intuitivo con el conteo diario de faltantes y personal activo
+- **Código de Unión** — Sistema ágil para vincular empleados al almacén mediante un código único
+- **Notificaciones Push Instantáneas** — Alertas automáticas al reportar, aprobar o rechazar un faltante
+- **Roles Personalizados** — Interfaz adaptativa que ajusta sus funcionalidades para Dueño y Empleado
+
+---
 
 ## 📱 Screenshots
 
@@ -36,11 +54,13 @@
 |---|---|---|---|
 | `(coming soon)` | `(coming soon)` | `(coming soon)` | `(coming soon)` |
 
+---
+
 ## 🚀 Quick Start
 
 ```bash
 # 1. Clone
-git clone https://github.com/tu-usuario/almacenpreciso.git
+git clone [https://github.com/tu-usuario/almacenpreciso.git](https://github.com/tu-usuario/almacenpreciso.git)
 cd almacenpreciso
 
 # 2. Install
@@ -48,14 +68,7 @@ pnpm install
 
 # 3. Start
 pnpm start
-```
-
-> Requires Expo Go or a development build on your device.
-
-## 🏗️ Project Architecture
-
-```
-app/                    # Expo Router screens
+Requiere Expo Go o una build de desarrollo configurada en tu dispositivo.🏗️ Project Architectureapp/                    # Expo Router screens
 ├── (auth)/             # Login & Register
 ├── (tabs)/             # Main tabbed interface
 │   ├── index.tsx       # Home (dashboard)
@@ -81,73 +94,13 @@ services/               # API layer
 
 context/                # State management
 └── auth-context.tsx    # Auth state + token persistence
-```
-
-## 🔌 API Reference
-
-| Method | Endpoint | Description |
-|---|---|---|
-| POST | `/api/auth/login` | Login |
-| POST | `/api/auth/register` | Register |
-| POST | `/api/auth/join` | Join almacén |
-| GET | `/api/auth/me` | Current user |
-| GET | `/api/usuarios` | List employees |
-| POST | `/api/usuarios/push-token` | Register push token |
-| GET | `/api/faltantes` | List faltantes |
-| POST | `/api/faltantes` | Create faltante |
-| PATCH | `/api/faltantes/:id/estado` | Approve/reject |
-| DELETE | `/api/faltantes/:id` | Delete faltante |
-| GET | `/api/comercios/me` | Union code |
-| GET | `/api/faltantes/metricas` | Dashboard metrics |
-
-> Backend hosted on Railway. URL configured via `EXPO_PUBLIC_API_URL` env var.
-
-## 🛠️ Scripts
-
-```bash
-pnpm start         # Dev server (builds CSS first)
+🔌 API ReferenceMethodEndpointDescriptionPOST/api/auth/loginLoginPOST/api/auth/registerRegisterPOST/api/auth/joinJoin almacénGET/api/auth/meCurrent userGET/api/usuariosList employeesPOST/api/usuarios/push-tokenRegister push tokenGET/api/faltantesList faltantesPOST/api/faltantesCreate faltantePATCH/api/faltantes/:id/estadoApprove/rejectDELETE/api/faltantes/:idDelete faltanteGET/api/comercios/meUnion codeGET/api/faltantes/metricasDashboard metricsBackend desplegado en Railway. La URL base se configura mediante la variable de entorno EXPO_PUBLIC_API_URL.🛠️ ScriptsBashpnpm start         # Dev server (builds CSS first)
 pnpm android       # Start for Android
 pnpm ios           # Start for iOS
 pnpm web           # Start for web
 pnpm build:css     # Rebuild Tailwind CSS
 pnpm lint          # ESLint
 node scripts/generate-icons.js   # Regenerate app icons
-```
-
-## 📦 Building APK
-
-```bash
-pnpm build:css
+📦 Building APKBashpnpm build:css
 eas build -p android --profile preview
-```
-
-> Requires an Expo account and EAS CLI (`pnpm add -g eas-cli`).
-
-## 🤝 Roles
-
-### Dueño
-- Dashboard with metrics (faltantes hoy, empleados activos)
-- Approve/reject faltante reports
-- Manage employees (view list)
-- Share union code
-
-### Empleado
-- Report new faltantes
-- View pending reports
-- View team members
-- Join almacén via union code
-
-## 🧩 Tech Stack
-
-| Frontend | Backend (separate) |
-|---|---|
-| Expo SDK 54 | Railway |
-| React Native 0.81 | Node.js / Express |
-| NativeWind 4 (Tailwind) | Supabase (PostgreSQL) |
-| TypeScript 5.9 | JWT auth |
-| expo-router v6 | REST API |
-| expo-notifications | Push notifications |
-
-## 📄 License
-
-MIT
+Requiere una cuenta de Expo y el CLI de EAS configurado (pnpm add -g eas-cli).🤝 RolesDueñoDashboard dinámico con métricas clave (faltantes del día, empleados activos)Aprobación y rechazo de reportes de faltantesGestión del personal y visualización del equipoGeneración y compartido del código de uniónEmpleadoReporte rápido de nuevos faltantesVisualización y seguimiento del estado de reportes pendientesAcceso a la lista del equipo de trabajoVinculación a comercios mediante el código de unión🧩 Tech StackFrontend (Mobile)Backend (Separado)Expo SDK 54Node.js / ExpressReact Native 0.81Supabase (PostgreSQL)NativeWind 4 (Tailwind)JWT AuthTypeScript 5.9Deploy en Railwayexpo-router v6REST APIexpo-notificationsPush notifications📄 LicenseMIT
